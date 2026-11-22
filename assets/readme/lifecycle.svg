@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-labelledby="title desc">
+  <title id="title">How a LockBox run works</title>
+  <desc id="desc">Every run boots a fresh Windows Sandbox, copies the target in, runs and observes it, snapshots and diffs the machine, writes a report to the host and then destroys the sandbox, unless you keep it.</desc>
+
+  <defs>
+    <style>
+      .sans { font-family: 'Segoe UI Variable Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; }
+      .mono { font-family: 'Cascadia Code', Consolas, ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .box { fill: #171C1F; stroke: #2A3237; stroke-width: 1.5; }
+      .n { fill: #3FC1C9; font-size: 18px; letter-spacing: 2px; }
+      .t { fill: #F2F4F5; font-size: 25px; font-weight: 600; }
+      .d { fill: #AEB7BC; font-size: 19px; }
+      .arrow { stroke: #3FC1C9; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="400" rx="24" fill="#101315"/>
+
+  <g id="heading" class="sans">
+    <text x="48" y="70" class="mono" font-size="18" fill="#3FC1C9" letter-spacing="3">ONE RUN, START TO FINISH</text>
+    <text x="48" y="114" font-size="40" font-weight="700" fill="#F2F4F5">In. Watch. Prove. Throw it away.</text>
+  </g>
+
+  <!-- the sealed guest: a dashed seam around the stations that happen inside the sandbox -->
+  <rect x="36" y="146" width="908" height="214" rx="18" fill="none" stroke="#3FC1C9" stroke-opacity="0.45" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <text x="56" y="352" class="mono" font-size="16" fill="#3FC1C9" fill-opacity="0.8">inside Windows Sandbox</text>
+
+  <g id="s1" class="sans" transform="translate(48 160)">
+    <rect class="box" width="200" height="166" rx="14"/>
+    <text x="20" y="38" class="n mono">01</text>
+    <text x="20" y="76" class="t">Fresh boot</text>
+    <text x="20" y="108" class="d">A brand-new</text>
+    <text x="20" y="132" class="d">Windows, every time</text>
+  </g>
+  <path class="arrow" d="M254 243 H274 M268 237 L274 243 L268 249"/>
+
+  <g id="s2" class="sans" transform="translate(280 160)">
+    <rect class="box" width="200" height="166" rx="14"/>
+    <text x="20" y="38" class="n mono">02</text>
+    <text x="20" y="76" class="t">Push in</text>
+    <text x="20" y="108" class="d">App, installer or</text>
+    <text x="20" y="132" class="d">file to C:\apps</text>
+  </g>
+  <path class="arrow" d="M486 243 H506 M500 237 L506 243 L500 249"/>
+
+  <g id="s3" class="sans" transform="translate(512 160)">
+    <rect class="box" width="200" height="166" rx="14"/>
+    <text x="20" y="38" class="n mono">03</text>
+    <text x="20" y="76" class="t">Run + watch</text>
+    <text x="20" y="108" class="d">Screens, UI tree,</text>
+    <text x="20" y="132" class="d">processes, network</text>
+  </g>
+  <path class="arrow" d="M718 243 H738 M732 237 L738 243 L732 249"/>
+
+  <g id="s4" class="sans" transform="translate(744 160)">
+    <rect class="box" width="188" height="166" rx="14"/>
+    <text x="20" y="38" class="n mono">04</text>
+    <text x="20" y="76" class="t">Snapshot diff</text>
+    <text x="20" y="108" class="d">Files, registry,</text>
+    <text x="20" y="132" class="d">services, tasks</text>
+  </g>
+  <path class="arrow" d="M950 243 H970 M964 237 L970 243 L964 249"/>
+
+  <g id="s5" class="sans" transform="translate(976 160)">
+    <rect class="box" width="176" height="166" rx="14" stroke="#FF6A3D" stroke-opacity="0.7"/>
+    <text x="20" y="38" class="n mono" fill="#FF6A3D">05</text>
+    <text x="20" y="76" class="t">Report,</text>
+    <text x="20" y="104" class="t">then gone</text>
+    <text x="20" y="136" class="d">or kept: --keep</text>
+  </g>
+</svg>

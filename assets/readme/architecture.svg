@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
+  <title id="title">LockBox architecture</title>
+  <desc id="desc">Three front doors, the LockBox GUI, sbx.cmd and Claude Code, all run app\lockbox\sbx.mjs on the bundled Node.js. It drives the sandbox-mcp 1.2.0 engine and mwrap.exe, which control a Windows Sandbox guest. Runs, reports and screenshots are shared in data\home.</desc>
+
+  <defs>
+    <style>
+      .sans { font-family: 'Segoe UI Variable Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; }
+      .mono { font-family: 'Cascadia Code', Consolas, ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .box { fill: #171C1F; stroke: #2A3237; stroke-width: 1.5; }
+      .t { fill: #F2F4F5; font-size: 24px; font-weight: 600; }
+      .p { fill: #3FC1C9; font-size: 18px; }
+      .d { fill: #AEB7BC; font-size: 19px; }
+      .wire { stroke: #4A565C; stroke-width: 2; fill: none; }
+      .wire-c { stroke: #3FC1C9; stroke-width: 2; fill: none; stroke-opacity: 0.8; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="660" rx="24" fill="#101315"/>
+
+  <g id="heading" class="sans">
+    <text x="48" y="70" class="mono" font-size="18" fill="#3FC1C9" letter-spacing="3">ONE FOLDER · NOTHING INSTALLED ON THE HOST</text>
+    <text x="48" y="114" font-size="40" font-weight="700" fill="#F2F4F5">Three front doors, one engine</text>
+  </g>
+
+  <!-- front doors -->
+  <g id="gui" class="sans" transform="translate(48 148)">
+    <rect class="box" width="268" height="96" rx="14"/>
+    <text x="22" y="42" class="t">LockBox GUI</text>
+    <text x="22" y="72" class="p mono">LockBox.cmd · WPF</text>
+  </g>
+  <g id="cli" class="sans" transform="translate(340 148)">
+    <rect class="box" width="268" height="96" rx="14"/>
+    <text x="22" y="42" class="t">Command line</text>
+    <text x="22" y="72" class="p mono">sbx.cmd &lt;command&gt;</text>
+  </g>
+  <g id="claude" class="sans" transform="translate(632 148)">
+    <rect class="box" width="268" height="96" rx="14"/>
+    <text x="22" y="42" class="t">Claude Code</text>
+    <text x="22" y="72" class="p mono">skills + CLAUDE.md</text>
+  </g>
+
+  <path class="wire" d="M182 244 V280 H474 M474 244 V296 M766 244 V280 H474"/>
+
+  <!-- front end -->
+  <g id="frontend" class="sans" transform="translate(48 296)">
+    <rect class="box" width="852" height="100" rx="14"/>
+    <text x="22" y="42" class="t">LockBox front end</text>
+    <text x="270" y="42" class="p mono">app\lockbox\sbx.mjs</text>
+    <text x="22" y="76" class="d">Keeps the sandbox after install-test. Adds uninstall-test, mwrap-test, -run, -pull.</text>
+  </g>
+
+  <path class="wire" d="M300 396 V432 M690 396 V432"/>
+
+  <g id="engine" class="sans" transform="translate(48 432)">
+    <rect class="box" width="500" height="96" rx="14"/>
+    <text x="22" y="42" class="t">sandbox-mcp 1.2.0 engine</text>
+    <text x="22" y="72" class="p mono">bundled node.exe · as shipped</text>
+  </g>
+  <g id="mwrap" class="sans" transform="translate(572 432)">
+    <rect class="box" width="328" height="96" rx="14"/>
+    <text x="22" y="42" class="t">mwrap.exe</text>
+    <text x="22" y="72" class="p mono">PSADT v4 wrapper</text>
+  </g>
+
+  <path class="wire-c" d="M298 528 V560 M736 528 V560"/>
+
+  <!-- guest -->
+  <g id="guest" class="sans" transform="translate(48 560)">
+    <rect width="852" height="64" rx="14" fill="#0E2326" stroke="#3FC1C9" stroke-width="1.5" stroke-dasharray="6 6"/>
+    <text x="22" y="40" class="t" fill="#F2F4F5">Windows Sandbox guest</text>
+    <text x="320" y="40" class="p mono">agent.ps1 · lock-browser.ps1 · C:\apps</text>
+  </g>
+
+  <!-- shared state -->
+  <g id="state" class="sans" transform="translate(932 148)">
+    <rect class="box" width="220" height="476" rx="14"/>
+    <text x="22" y="44" class="t">data\home</text>
+    <text x="22" y="74" class="p mono">shared state</text>
+    <text x="22" y="124" class="d">runs</text>
+    <text x="22" y="156" class="d">report.md</text>
+    <text x="22" y="188" class="d">screenshots</text>
+    <text x="22" y="220" class="d">recordings</text>
+    <text x="22" y="252" class="d">PSADT packages</text>
+    <text x="22" y="284" class="d">logs</text>
+    <text x="22" y="336" class="d">A sandbox started</text>
+    <text x="22" y="362" class="d">in the GUI is the</text>
+    <text x="22" y="388" class="d">one the CLI and</text>
+    <text x="22" y="414" class="d">Claude see.</text>
+  </g>
+  <path class="wire" stroke-dasharray="4 6" d="M900 346 H932"/>
+</svg>

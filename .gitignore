@@ -1,0 +1,9 @@
+# Run output, caches and local state (created at run time)
+data/home/
+data/claude/
+data/lockbox.env
+data/recipes.json
+
+# Not part of LockBox
+tor-browser-*.exe
+desktop.ini

@@ -1,0 +1,5 @@
+﻿sandbox-mcp 1.2.0
+Platform: Windows x64
+Bundled runtime: Node.js v26.13.0 (license: NODE-LICENSE.txt)
+Source commit: b5ea2b2348c157581a3991dfc6064f19655e02d5
+Build channel: release
