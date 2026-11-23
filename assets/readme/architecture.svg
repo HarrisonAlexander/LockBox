@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
   <title id="title">LockBox architecture</title>
-  <desc id="desc">Three front doors, the LockBox GUI, sbx.cmd and Claude Code, all run app\lockbox\sbx.mjs on the bundled Node.js. It drives the sandbox-mcp 1.2.0 engine and mwrap.exe, which control a Windows Sandbox guest. Runs, reports and screenshots are shared in data\home.</desc>
+  <desc id="desc">Three front doors, the LockBox GUI, sbx.cmd and Claude Code, all run app\lockbox\sbx.mjs on the bundled Node.js. It drives the sandbox-mcp 1.2.0 engine, which controls a Windows Sandbox guest. Runs, reports and screenshots are shared in data\home.</desc>
 
   <defs>
     <style>
@@ -46,29 +46,24 @@
     <rect class="box" width="852" height="100" rx="14"/>
     <text x="22" y="42" class="t">LockBox front end</text>
     <text x="270" y="42" class="p mono">app\lockbox\sbx.mjs</text>
-    <text x="22" y="76" class="d">Keeps the sandbox after install-test. Adds uninstall-test, mwrap-test, -run, -pull.</text>
+    <text x="22" y="76" class="d">Keeps the sandbox after install-test, so you can inspect it. Adds uninstall-test.</text>
   </g>
 
-  <path class="wire" d="M300 396 V432 M690 396 V432"/>
+  <path class="wire" d="M474 396 V432"/>
 
   <g id="engine" class="sans" transform="translate(48 432)">
-    <rect class="box" width="500" height="96" rx="14"/>
+    <rect class="box" width="852" height="96" rx="14"/>
     <text x="22" y="42" class="t">sandbox-mcp 1.2.0 engine</text>
     <text x="22" y="72" class="p mono">bundled node.exe · as shipped</text>
   </g>
-  <g id="mwrap" class="sans" transform="translate(572 432)">
-    <rect class="box" width="328" height="96" rx="14"/>
-    <text x="22" y="42" class="t">mwrap.exe</text>
-    <text x="22" y="72" class="p mono">PSADT v4 wrapper</text>
-  </g>
 
-  <path class="wire-c" d="M298 528 V560 M736 528 V560"/>
+  <path class="wire-c" d="M474 528 V560"/>
 
   <!-- guest -->
   <g id="guest" class="sans" transform="translate(48 560)">
     <rect width="852" height="64" rx="14" fill="#0E2326" stroke="#3FC1C9" stroke-width="1.5" stroke-dasharray="6 6"/>
     <text x="22" y="40" class="t" fill="#F2F4F5">Windows Sandbox guest</text>
-    <text x="320" y="40" class="p mono">agent.ps1 · lock-browser.ps1 · C:\apps</text>
+    <text x="320" y="40" class="p mono">agent.ps1 · C:\apps</text>
   </g>
 
   <!-- shared state -->
@@ -80,8 +75,7 @@
     <text x="22" y="156" class="d">report.md</text>
     <text x="22" y="188" class="d">screenshots</text>
     <text x="22" y="220" class="d">recordings</text>
-    <text x="22" y="252" class="d">PSADT packages</text>
-    <text x="22" y="284" class="d">logs</text>
+    <text x="22" y="252" class="d">logs</text>
     <text x="22" y="336" class="d">A sandbox started</text>
     <text x="22" y="362" class="d">in the GUI is the</text>
     <text x="22" y="388" class="d">one the CLI and</text>

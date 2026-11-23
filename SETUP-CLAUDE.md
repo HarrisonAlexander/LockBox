@@ -18,9 +18,9 @@ from npm: LockBox bundles everything it needs.
 powershell -NoProfile -ExecutionPolicy Bypass -File "<LockBox>\setup\configure-claude.ps1"
 ```
 
-This copies the five `windows-sandbox-*` skills and LockBox's `mwrap` skill (PSADT wrap and test) into `<LockBox>\.claude\skills`. Claude Code loads them when started in
-`<LockBox>`. Nothing outside the folder changes, and nothing records a path, so this never needs re-running
-after the folder moves. LockBox also does this itself every time it opens Claude.
+This copies the five `windows-sandbox-*` skills into `<LockBox>\.claude\skills`. Claude Code loads them when
+started in `<LockBox>`. Nothing outside the folder changes, and nothing records a path, so this never needs
+re-running after the folder moves. LockBox also does this itself every time it opens Claude.
 
 ## 3. Optional: skills in every folder
 
@@ -38,7 +38,7 @@ run whichever `sbx` is on PATH, which may not be LockBox's.
 
 1. Run `"<LockBox>\sbx.cmd" status --json`. It should print JSON with a `running` field and exit 0.
 2. Tell the user to start Claude Code in `<LockBox>` and check `/skills`. The five `windows-sandbox-*`
-   skills and `mwrap` should be listed.
+   skills should be listed.
 3. Optional end-to-end check, which takes about a minute and boots a real guest. Only run it when
    `status` shows no sandbox running:
    `"<LockBox>\sbx.cmd" run C:\Windows\System32\charmap.exe --network off` should report PASS.

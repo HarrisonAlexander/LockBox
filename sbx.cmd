@@ -12,11 +12,15 @@ REM  Uses app\node\node.exe, app\lockbox\sbx.mjs (LockBox's install/uninstall
 REM  split) and app\sandbox-mcp. State goes to data\home
 REM  (SANDBOX_MCP_HOME), shared with LockBox.cmd.
 REM  Loads data\lockbox.env if present (an already-set variable wins).
+REM  An MSI install (app\installed exists) is read-only for users, so there
+REM  data\ is %LOCALAPPDATA%\LockBox instead.
 REM  Nothing here records an absolute path; %~dp0 is resolved on every run.
 REM ===========================================================================
 setlocal EnableExtensions
-if exist "%~dp0data\lockbox.env" for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%~dp0data\lockbox.env") do if not defined %%A set "%%A=%%B"
-if not defined SANDBOX_MCP_HOME set "SANDBOX_MCP_HOME=%~dp0data\home"
+set "_SBX_DATA=%~dp0data"
+if exist "%~dp0app\installed" set "_SBX_DATA=%LOCALAPPDATA%\LockBox"
+if exist "%_SBX_DATA%\lockbox.env" for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%_SBX_DATA%\lockbox.env") do if not defined %%A set "%%A=%%B"
+if not defined SANDBOX_MCP_HOME set "SANDBOX_MCP_HOME=%_SBX_DATA%\home"
 set "PATH=%~dp0app\node;%PATH%"
 REM  wsb.exe is a Store app alias; hosts and MCP clients with a trimmed PATH miss it
 where wsb.exe >nul 2>&1 || set "PATH=%PATH%;%LOCALAPPDATA%\Microsoft\WindowsApps"

@@ -1,4 +1,4 @@
-# install-skills.ps1 - OPTIONAL. Junction this LockBox's windows-sandbox-* and mwrap skills into
+# install-skills.ps1 - OPTIONAL. Junction this LockBox's windows-sandbox-* skills into
 # %USERPROFILE%\.claude\skills so Claude Code sees them in every folder. Not needed for Claude started
 # in the LockBox folder or from the Open Claude button: those get the skills as project skills.
 #
@@ -11,7 +11,6 @@ param([switch]$Uninstall)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $src  = Join-Path $root 'app\sandbox-mcp\skills'
-$own  = Join-Path $root 'app\lockbox\skills'   # LockBox's own skills (mwrap)
 $dest = Join-Path $env:USERPROFILE '.claude\skills'
 New-Item -ItemType Directory -Force $dest | Out-Null
 
@@ -24,7 +23,6 @@ function Get-JunctionTarget([string]$path) {
 
 $skipped = 0
 $skills = @(Get-ChildItem -LiteralPath $src -Directory -Filter 'windows-sandbox-*')
-if (Test-Path -LiteralPath $own) { $skills += @(Get-ChildItem -LiteralPath $own -Directory) }
 foreach ($s in $skills) {
     $link = Join-Path $dest $s.Name
     $exists = Test-Path -LiteralPath $link

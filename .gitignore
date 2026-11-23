@@ -7,3 +7,8 @@ data/recipes.json
 # Not part of LockBox
 tor-browser-*.exe
 desktop.ini
+
+# MSI build staging and output (installer\Build.ps1)
+installer/build/
+installer/build.tar
+installer/output/

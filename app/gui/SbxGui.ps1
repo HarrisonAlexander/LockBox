@@ -21,6 +21,9 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 $Root      = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $AppDir    = Join-Path $Root 'app'
 $ConfigDir = Join-Path $Root 'data'
+# An MSI install marks itself with app\installed. Program Files is read-only for users, so each user's
+# state (runs, recipes, lockbox.env) goes to %LOCALAPPDATA%\LockBox instead.
+if (Test-Path -LiteralPath (Join-Path $AppDir 'installed')) { $ConfigDir = Join-Path $env:LOCALAPPDATA 'LockBox' }
 $Recipes   = Join-Path $ConfigDir 'recipes.json'
 $CliJs     = Join-Path $AppDir 'lockbox\sbx.mjs'   # passes through to sandbox-mcp\src\cli.js; adds uninstall-test
 if (-not (Test-Path -LiteralPath $CliJs) -or -not (Test-Path -LiteralPath (Join-Path $AppDir 'sandbox-mcp\src\cli.js'))) {
@@ -75,18 +78,6 @@ $Workflows = @(
          'The report lists every file, registry key, service, scheduled task and autorun the installer added, and what the uninstaller left behind. Under More options, Click through setup myself leaves the clicking to you, and Silent install runs it unattended instead: MSI packages get /qn; for other installers put their silent switch (for example /S or /VERYSILENT) in Arguments.')
        details = @(@('Command', 'sbx install-test'), @('Typical time', '~2 minutes + installer'), @('Result', 'added / left-behind diff')) },
 
-    @{ key = 'mwrap-test'; title = 'Wrap and test (PSADT)'; glyph = [char]0xE7B8; color = '#5C2E91'
-       button = 'Wrap and test'; targetLabel = 'Installer (.msi, .exe, .msp, .msix), mwrap spec (.json) or PSADT package folder'; folderOk = $true
-       argsLabel = 'Installer arguments (optional): MSI properties, or the EXE''s silent switch'
-       filter = 'Installers and specs (*.msi;*.mst;*.msp;*.exe;*.msix;*.appx;*.msixbundle;*.appxbundle;*.json)|*.msi;*.mst;*.msp;*.exe;*.msix;*.appx;*.msixbundle;*.appxbundle;*.json|All files (*.*)|*.*'
-       fields = @('target', 'mode', 'args', 'mwrap'); opts = @('network', 'memory', 'nogpu', 'testrepair', 'testuninstall', 'uninstallargs', 'timeout', 'leftovers', 'keep')
-       defaultNetwork = 'on'
-       about = @(
-         'Wraps the installer in a PSAppDeployToolkit v4 package with mwrap on this PC (the same output as Master Packager''s MasterWrapper), copies the package into a fresh sandbox and runs Invoke-AppDeployToolkit.exe there, the way Intune would deploy it.',
-         'Silent runs it unattended, as Intune does. Interactive shows the PSADT dialogs (close apps, defer, progress, prompts) in the sandbox window for you to answer. Under More options, Test repair and Test uninstall run those deployment types too; the uninstall reports what was left behind.',
-         'The package (with the installer in Files\), the PSADT and MSI logs and the report land in the run folder (Open folder). The package and mwrap.exe also stay in the sandbox under C:\sbx-test, and the session page can rerun the uninstall or copy the package back out.')
-       details = @(@('Command', 'sbx mwrap-test'), @('Wraps with', 'app\mwrap\mwrap.exe'), @('Typical time', '~1 minute + installer'), @('Result', 'package, logs, report')) },
-
     @{ key = 'detonate'; title = 'Detonate a file'; glyph = [char]0xE7BA; color = '#C42B1C'
        button = 'Detonate with no network'; targetLabel = 'File you do not trust'; folderOk = $false
        filter = 'All files (*.*)|*.*'
@@ -97,15 +88,6 @@ $Workflows = @(
          'Choose network "firewall" to see the addresses it tries while they are blocked.',
          'Windows Sandbox is strong isolation, not a guarantee. Treat everything that comes back (screenshots, logs) as untrusted. For real malware analysis use a dedicated analysis machine.')
        details = @(@('Command', 'sbx detonate'), @('Network', 'off by default'), @('Result', 'behaviour report (not a verdict)')) },
-
-    @{ key = 'browse'; title = 'Open one website'; glyph = [char]0xE774; color = '#0F7B84'
-       button = 'Open locked to this site'; targetLabel = ''; folderOk = $false; filter = ''
-       fields = @('url'); opts = @('memory', 'windowed')
-       about = @(
-         'Opens a single website in a throwaway sandbox that can reach that site and nothing else. The sandbox goes full screen with only the site showing: no taskbar, no Start menu, no desktop. Ctrl+Alt+Break leaves full screen.',
-         'Network: the guest firewall blocks every outbound connection except DNS and web traffic to the site''s own addresses (re-checked every minute). Your home network, other sites and the host are unreachable. Edge is also locked by policy: other URLs, file:// pages, downloads, file pickers, printing, extensions, dev tools and sign-in are all blocked. Clipboard, printer, microphone and camera sharing are off for every sandbox.',
-         'Most sites load pieces from other domains (CDNs, fonts, login pages). If the page looks broken, add those domains under "Also allow". Closing the sandbox throws everything away.')
-       details = @(@('Commands', 'sbx start --network firewall, then the lock script'), @('Guest script', 'app\gui\guest\lock-browser.ps1'), @('Typical time', '30-40 seconds'), @('Ends with', 'Stop sandbox')) },
 
     @{ key = 'deps'; title = 'Check dependencies'; glyph = [char]0xE71D; color = '#8764B8'
        button = 'Scan dependencies'; targetLabel = 'App (.exe or folder)'; folderOk = $true
@@ -299,22 +281,9 @@ $Workflows = @(
                 <TextBox x:Name="TargetBox" AllowDrop="True"/>
               </DockPanel>
             </StackPanel>
-            <StackPanel x:Name="ModeRow">
-              <TextBlock Text="Test as" Style="{StaticResource FieldLabel}"/>
-              <StackPanel Orientation="Horizontal">
-                <RadioButton x:Name="ModeSilent" GroupName="DeployMode" Content="Silent (as Intune deploys it)" IsChecked="True" Margin="0,0,24,0"
-                             ToolTip="Invoke-AppDeployToolkit.exe -DeployMode Silent: no dialogs, nothing to click"/>
-                <RadioButton x:Name="ModeInteractive" GroupName="DeployMode" Content="Interactive (answer the PSADT dialogs in the sandbox window)"
-                             ToolTip="Invoke-AppDeployToolkit.exe -DeployMode Interactive: close-apps, defer, progress and prompt dialogs show"/>
-              </StackPanel>
-            </StackPanel>
             <StackPanel x:Name="ArgsRow">
               <TextBlock x:Name="ArgsLabel" Text="Arguments (optional)" Style="{StaticResource FieldLabel}"/>
               <TextBox x:Name="ArgsBox"/>
-            </StackPanel>
-            <StackPanel x:Name="MwrapRow">
-              <TextBlock Text="mwrap options (optional), e.g. --progress --remove-msi-name &quot;Old App&quot; --post-prompt &quot;Done&quot;" Style="{StaticResource FieldLabel}"/>
-              <TextBox x:Name="MwrapBox" ToolTip="Passed to mwrap wrap as-is. Run app\mwrap\mwrap.exe help for the full list"/>
             </StackPanel>
             <StackPanel x:Name="TestRow">
               <TextBlock Text="Test script run inside afterwards (optional .ps1)" Style="{StaticResource FieldLabel}"/>
@@ -322,12 +291,6 @@ $Workflows = @(
                 <Button x:Name="BrowseTest" DockPanel.Dock="Right" Style="{StaticResource Secondary}" Height="30" Margin="6,0,0,0" Content="File..."/>
                 <TextBox x:Name="TestBox"/>
               </DockPanel>
-            </StackPanel>
-            <StackPanel x:Name="UrlRow">
-              <TextBlock Text="Website" Style="{StaticResource FieldLabel}"/>
-              <TextBox x:Name="UrlBox" ToolTip="For example https://example.com"/>
-              <TextBlock Text="Also allow these domains (optional, comma separated)" Style="{StaticResource FieldLabel}"/>
-              <TextBox x:Name="AllowBox" ToolTip="CDN, font or login domains the site needs, e.g. cdn.example.net, fonts.gstatic.com"/>
             </StackPanel>
 
             <!-- More options -->
@@ -384,10 +347,8 @@ $Workflows = @(
                 <CheckBox x:Name="opt_leftovers" Content="Fail on leftovers" Margin="0,24,16,8"/>
                 <CheckBox x:Name="opt_manual" Content="Click through setup myself" Margin="0,24,16,8" ToolTip="Show the setup UI but do not click it: you click through it in the sandbox window"/>
                 <CheckBox x:Name="opt_silent" Content="Silent install (no setup UI)" Margin="0,24,16,8" ToolTip="Unattended: MSI gets /qn; other installers need their silent switch in Arguments"/>
-                <CheckBox x:Name="opt_testrepair" Content="Test repair too" Margin="0,24,16,8" ToolTip="Run Invoke-AppDeployToolkit.exe -DeploymentType Repair after the install"/>
                 <CheckBox x:Name="opt_testuninstall" Content="Test uninstall too" Margin="0,24,16,8" ToolTip="Uninstall right after the install and report leftovers. Off: use Uninstall test on the session page when you are done"/>
                 <CheckBox x:Name="opt_keep" Content="Keep sandbox running" Margin="0,24,16,8"/>
-                <CheckBox x:Name="opt_windowed" Content="Show taskbar (windowed)" Margin="0,24,16,8" ToolTip="Normal Edge window with the Windows taskbar and Start menu. Off (default): the site fills the screen and nothing else is shown"/>
               </WrapPanel>
             </Border>
 
@@ -408,6 +369,7 @@ $Workflows = @(
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
           <DockPanel Grid.Row="0">
+            <Image x:Name="ResIcon" Width="32" Height="32" VerticalAlignment="Center" Margin="0,0,12,0" Visibility="Collapsed"/>
             <TextBlock x:Name="ResGlyph" FontFamily="{StaticResource Icons}" FontSize="30" VerticalAlignment="Center" Margin="0,0,12,0"/>
             <TextBlock x:Name="ResElapsed" DockPanel.Dock="Right" Foreground="#5C5C5C" VerticalAlignment="Center"/>
             <StackPanel VerticalAlignment="Center">
@@ -483,8 +445,6 @@ $Workflows = @(
             <Button x:Name="SessFolderBtn" Style="{StaticResource Secondary}" Height="30" Margin="0,0,8,6" Content="Open artifacts"/>
             <Button x:Name="SessUninstallBtn" Style="{StaticResource Secondary}" Height="30" Margin="0,0,8,6" Content="Uninstall test"
                     ToolTip="Uninstall what the install test installed, then report what it left behind. The sandbox stays running"/>
-            <Button x:Name="SessPullBtn" Style="{StaticResource Secondary}" Height="30" Margin="0,0,8,6" Content="Copy package out" Visibility="Collapsed"
-                    ToolTip="Copy the PSADT package back out of the sandbox (with any changes made there) into the run folder, and refresh the logs"/>
             <Button x:Name="SessStopBtn" Style="{StaticResource Secondary}" Height="30" Margin="0,0,8,6" Content="Stop sandbox"/>
           </WrapPanel>
         </Grid>
@@ -522,6 +482,15 @@ $Xaml.SelectNodes('//*[@*[local-name()="Name"]]') | ForEach-Object {
     $ui[$n.Value] = $Window.FindName($n.Value)
 }
 $IconFont = $Window.Resources['Icons']
+
+# App icon: title bar and taskbar, and the results page header while a run is in progress.
+$IconFile = Join-Path $PSScriptRoot 'box.ico'
+if (Test-Path -LiteralPath $IconFile) {
+    $iconUri = New-Object System.Uri($IconFile)
+    $Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create($iconUri)
+    $iconDecoder = [System.Windows.Media.Imaging.BitmapDecoder]::Create($iconUri, 'None', 'OnLoad')
+    $ui.ResIcon.Source = $iconDecoder.Frames | Sort-Object PixelWidth -Descending | Select-Object -First 1
+}
 
 # ---------------------------------------------------------------------------------------------
 # State
@@ -650,11 +619,7 @@ function Resolve-RecipePath([string]$path) {
 }
 
 # Built-in presets: ready-made recipes listed above the saved ones (they can't be deleted).
-# YouTube streams from *.googlevideo.com and loads images and scripts from several Google domains.
 $Presets = @(
-    [pscustomobject]@{ name = 'YouTube'; workflow = 'browse'; glyph = [char]0xE714; url = 'https://www.youtube.com/'
-                       allow = 'googlevideo.com, ytimg.com, ggpht.com, gstatic.com, googleapis.com, googleusercontent.com, youtube-nocookie.com'
-                       options = [pscustomobject]@{ windowed = $true } }
     [pscustomobject]@{ name = 'Chocolatey demo'; workflow = 'script'; glyph = [char]0xE7B8
                        target = (Join-Path $PSScriptRoot 'samples\install-choco-apps.ps1')
                        options = [pscustomobject]@{ network = 'on' } }
@@ -681,8 +646,7 @@ function Fill-List {
     foreach ($p in $Presets) {
         $w = $Workflows | Where-Object { $_.key -eq $p.workflow } | Select-Object -First 1
         $item = New-Object System.Windows.Controls.ListBoxItem
-        $what = if ($p.url) { ([Uri]$p.url).Host } else { Split-Path -Leaf $p.target }
-        $item.Content = New-ListRow $p.glyph $w.color $p.name "$($w.title)  -  $what"
+        $item.Content = New-ListRow $p.glyph $w.color $p.name "$($w.title)  -  $(Split-Path -Leaf $p.target)"
         $item.Tag = @{ kind = 'recipe'; wf = $w; recipe = $p }
         [void]$ui.List.Items.Add($item)
     }
@@ -711,7 +675,7 @@ function Fill-List {
 # ---------------------------------------------------------------------------------------------
 # Right pane: show a workflow (optionally pre-filled from a recipe)
 # ---------------------------------------------------------------------------------------------
-$OptionNames = 'network', 'memory', 'wait', 'exe', 'provision', 'uninstall', 'uninstallargs', 'timeout', 'duration', 'every', 'nogpu', 'console', 'record', 'full', 'leftovers', 'keep', 'windowed', 'manual', 'silent', 'testuninstall', 'testrepair'
+$OptionNames = 'network', 'memory', 'wait', 'exe', 'provision', 'uninstall', 'uninstallargs', 'timeout', 'duration', 'every', 'nogpu', 'console', 'record', 'full', 'leftovers', 'keep', 'manual', 'silent', 'testuninstall'
 
 function Set-Network([string]$value) {
     foreach ($i in $ui.NetworkBox.Items) { if ($i.Content -eq $value) { $ui.NetworkBox.SelectedItem = $i } }
@@ -753,11 +717,7 @@ function Show-Workflow($w, $recipe) {
     $ui.TargetRow.Visibility = if ($w.fields -contains 'target') { 'Visible' } else { 'Collapsed' }
     $ui.ArgsRow.Visibility   = if ($w.fields -contains 'args')   { 'Visible' } else { 'Collapsed' }
     $ui.TestRow.Visibility   = if ($w.fields -contains 'test')   { 'Visible' } else { 'Collapsed' }
-    $ui.UrlRow.Visibility    = if ($w.fields -contains 'url')    { 'Visible' } else { 'Collapsed' }
-    $ui.ModeRow.Visibility   = if ($w.fields -contains 'mode')   { 'Visible' } else { 'Collapsed' }
-    $ui.MwrapRow.Visibility  = if ($w.fields -contains 'mwrap')  { 'Visible' } else { 'Collapsed' }
     $ui.TargetLabel.Text = $w.targetLabel
-    $ui.ArgsLabel.Text = if ($w.argsLabel) { $w.argsLabel } else { 'Arguments (optional)' }
     $ui.BrowseFolder.Visibility = if ($w.folderOk) { 'Visible' } else { 'Collapsed' }
     foreach ($o in $OptionNames) {
         $ui["opt_$o"].Visibility = if ($w.opts -contains $o) { 'Visible' } else { 'Collapsed' }
@@ -771,16 +731,12 @@ function Show-Workflow($w, $recipe) {
     foreach ($b in 'MemoryBox', 'WaitBox', 'ExeBox', 'ProvisionBox', 'UninstallArgsBox', 'TimeoutBox', 'DurationBox', 'EveryBox') { $ui[$b].Text = '' }
     # Defaults: install and stop. The sandbox stays up and the app stays installed until you say otherwise.
     $ui.UninstallBox.Text = ''
-    $ui.MwrapBox.Text = ''
-    $ui.ModeSilent.IsChecked = $true
-    foreach ($c in 'nogpu', 'console', 'record', 'full', 'leftovers', 'windowed', 'manual', 'silent', 'testuninstall', 'testrepair') { $ui["opt_$c"].IsChecked = $false }
+    foreach ($c in 'nogpu', 'console', 'record', 'full', 'leftovers', 'manual', 'silent', 'testuninstall') { $ui["opt_$c"].IsChecked = $false }
     $ui.opt_keep.IsChecked = $true
     if ($recipe) {
         $ui.TargetBox.Text = Resolve-RecipePath ([string]$recipe.target)
         $ui.ArgsBox.Text   = [string]$recipe.args
         $ui.TestBox.Text   = Resolve-RecipePath ([string]$recipe.test)
-        $ui.UrlBox.Text    = [string]$recipe.url
-        $ui.AllowBox.Text  = [string]$recipe.allow
         $o = $recipe.options
         if ($o) {
             if ($o.network) { Set-Network $o.network }
@@ -788,10 +744,8 @@ function Show-Workflow($w, $recipe) {
                                 @('uninstallargs', 'UninstallArgsBox'), @('timeout', 'TimeoutBox'), @('duration', 'DurationBox'), @('every', 'EveryBox'))) {
                 if ($o.($pair[0])) { $ui[$pair[1]].Text = [string]$o.($pair[0]) }
             }
-            foreach ($c in 'nogpu', 'console', 'record', 'full', 'leftovers', 'windowed', 'manual', 'silent', 'testuninstall', 'testrepair') { if ($o.$c) { $ui["opt_$c"].IsChecked = $true } }
+            foreach ($c in 'nogpu', 'console', 'record', 'full', 'leftovers', 'manual', 'silent', 'testuninstall') { if ($o.$c) { $ui["opt_$c"].IsChecked = $true } }
             if ($null -ne $o.keep) { $ui.opt_keep.IsChecked = [bool]$o.keep }
-            if ($o.mode -eq 'interactive') { $ui.ModeInteractive.IsChecked = $true }
-            if ($o.mwrap) { $ui.MwrapBox.Text = [string]$o.mwrap }
         }
     }
     Update-GoButton
@@ -830,27 +784,21 @@ function Update-GoButton {
 function Get-FormValues {
     @{
         target = $ui.TargetBox.Text.Trim().Trim('"'); args = $ui.ArgsBox.Text; test = $ui.TestBox.Text.Trim().Trim('"')
-        url = $ui.UrlBox.Text.Trim(); allow = $ui.AllowBox.Text.Trim()
         options = [ordered]@{
             network = $ui.NetworkBox.SelectedItem.Content; memory = $ui.MemoryBox.Text.Trim(); wait = $ui.WaitBox.Text.Trim()
             exe = $ui.ExeBox.Text.Trim(); provision = $ui.ProvisionBox.Text.Trim(); uninstall = $ui.UninstallBox.Text.Trim()
             uninstallargs = $ui.UninstallArgsBox.Text; timeout = $ui.TimeoutBox.Text.Trim(); duration = $ui.DurationBox.Text.Trim()
             every = $ui.EveryBox.Text.Trim(); nogpu = [bool]$ui.opt_nogpu.IsChecked; console = [bool]$ui.opt_console.IsChecked
             record = [bool]$ui.opt_record.IsChecked; full = [bool]$ui.opt_full.IsChecked; leftovers = [bool]$ui.opt_leftovers.IsChecked
-            keep = [bool]$ui.opt_keep.IsChecked; windowed = [bool]$ui.opt_windowed.IsChecked
+            keep = [bool]$ui.opt_keep.IsChecked
             manual = [bool]$ui.opt_manual.IsChecked; silent = [bool]$ui.opt_silent.IsChecked; testuninstall = [bool]$ui.opt_testuninstall.IsChecked
-            testrepair = [bool]$ui.opt_testrepair.IsChecked; mwrap = $ui.MwrapBox.Text.Trim()
-            mode = if ($ui.ModeInteractive.IsChecked) { 'interactive' } else { 'silent' }
         }
     }
 }
 
 function Build-Args($w, $v) {
     $a = New-Object System.Collections.Generic.List[string]
-    if ($w.key -eq 'browse') {
-        # No vGPU: YouTube-style pages with autoplaying video shut the sandbox down within seconds with it on.
-        $a.Add('start'); $a.Add('--network'); $a.Add('firewall'); $a.Add('--no-gpu')
-    } elseif ($w.key -eq 'script') {
+    if ($w.key -eq 'script') {
         # Only boots here; the script and its arguments go in through Get-ScriptSteps.
         $a.Add('start')
         $o = $v.options
@@ -863,7 +811,7 @@ function Build-Args($w, $v) {
     if ($w.fields -contains 'target') { $a.Add((Quote-Arg $v.target)) }
     $o = $v.options
     $has = { param($name) $w.opts -contains $name }
-    if (($w.fields -contains 'args') -and $v.args -and $w.key -ne 'mwrap-test') { $a.Add('--args'); $a.Add((Quote-Arg $v.args)) }
+    if (($w.fields -contains 'args') -and $v.args) { $a.Add('--args'); $a.Add((Quote-Arg $v.args)) }
     if (($w.fields -contains 'test') -and $v.test) { $a.Add('--test'); $a.Add((Quote-Arg $v.test)) }
     if ((& $has 'network') -and $o.network) { $a.Add('--network'); $a.Add($o.network) }
     $valueOpts = @(@('memory', '--memory'), @('wait', '--wait'), @('exe', '--exe'), @('provision', '--provision'), @('uninstallargs', '--uninstall-args'),
@@ -881,45 +829,10 @@ function Build-Args($w, $v) {
         }
         if (-not $o.keep) { $a.Add('--no-keep') }
     }
-    # mwrap-test (app\lockbox\sbx.mjs): Arguments are the installer's, mwrap options go to mwrap as-is.
-    if ($w.key -eq 'mwrap-test') {
-        $a.Add('--mode'); $a.Add($o.mode)
-        if ($v.args) { $a.Add('--install-args'); $a.Add((Quote-Arg $v.args)) }
-        if ($o.mwrap) { $a.Add('--mwrap'); $a.Add((Quote-Arg $o.mwrap)) }
-        if ($o.testrepair) { $a.Add('--repair') }
-        if ($o.testuninstall) { $a.Add('--uninstall') }
-        if (-not $o.keep) { $a.Add('--no-keep') }
-    }
     $flags = @(@('nogpu', '--no-gpu'), @('console', '--console'), @('record', '--record'), @('full', '--full'), @('leftovers', '--fail-on-leftovers'), @('keep', '--keep'))
     foreach ($p in $flags) { if ((& $has $p[0]) -and $o.($p[0])) { $a.Add($p[1]) } }
     if ($w.key -ne 'deps') { $a.Add('--json') }
     $a
-}
-
-# "Open one website": an http(s) URL with a real host, or $null.
-function Get-BrowseUrl([string]$text) {
-    $t = $text.Trim()
-    if (-not $t) { return $null }
-    if ($t -notmatch '^[a-zA-Z][a-zA-Z0-9+.-]*://') { $t = "https://$t" }
-    $u = $null
-    if (-not [Uri]::TryCreate($t, 'Absolute', [ref]$u)) { return $null }
-    if ($u.Scheme -notin 'http', 'https' -or $u.Host -notmatch '\.') { return $null }
-    $u
-}
-function Split-Domains([string]$text) {
-    @($text -split '[,;\s]+' | Where-Object { $_ } | ForEach-Object { $_.Trim().ToLower() })
-}
-# What runs after "sbx start --network firewall": copy the lock script in, run it (it opens Edge).
-function Get-BrowseSteps($v) {
-    $u = Get-BrowseUrl $v.url
-    $guestCmd = "powershell -NoProfile -ExecutionPolicy Bypass -File C:\apps\lock-browser.ps1 -Url '" + $u.AbsoluteUri.Replace("'", "''") + "'"
-    $doms = Split-Domains $v.allow
-    if ($doms.Count) { $guestCmd += " -Allow '" + ($doms -join ',') + "'" }
-    if (-not $v.options.windowed) { $guestCmd += ' -Kiosk' }
-    ,@(
-        ,@('push', (Quote-Arg (Join-Path $PSScriptRoot 'guest\lock-browser.ps1')))
-        ,@('exec', '--timeout', '120', (Quote-Arg $guestCmd))
-    )
 }
 
 # "Run a PowerShell script": after "sbx start", copy the script in and run it. exec waits for it
@@ -941,18 +854,8 @@ function Test-Form($w, $v) {
         if (-not $v.target) { return 'Choose a file first.' }
         if (-not (Test-Path -LiteralPath $v.target)) { return "Not found: $($v.target)" }
         if ($w.key -eq 'script' -and $v.target -notmatch '\.ps1$') { return 'Choose a PowerShell script (.ps1).' }
-        if ($w.key -eq 'mwrap-test') {
-            if (Test-Path -LiteralPath $v.target -PathType Container) {
-                if (-not (Test-Path -LiteralPath (Join-Path $v.target 'Invoke-AppDeployToolkit.exe'))) { return 'That folder is not a PSADT v4 package (no Invoke-AppDeployToolkit.exe).' }
-            } elseif ($v.target -notmatch '\.(msi|mst|msp|exe|msix|msixbundle|appx|appxbundle|json)$') { return 'Choose an .msi, .mst, .msp, .exe, .msix/.appx, an mwrap spec (.json) or a package folder.' }
-            if (([regex]::Matches($v.options.mwrap, '"')).Count % 2) { return 'mwrap options have an unbalanced double quote.' }
-        }
     }
     if (($w.fields -contains 'test') -and $v.test -and -not (Test-Path -LiteralPath $v.test)) { return "Test script not found: $($v.test)" }
-    if ($w.fields -contains 'url') {
-        if (-not (Get-BrowseUrl $v.url)) { return 'Enter a website address, like https://example.com' }
-        foreach ($d in (Split-Domains $v.allow)) { if ($d -notmatch '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$') { return "Not a domain name: $d" } }
-    }
     foreach ($n in 'memory', 'wait', 'timeout', 'duration', 'every') {
         $x = $v.options.$n
         if (($w.opts -contains $n) -and $x -and -not ($x -match '^\d+$')) { return "$n must be a whole number." }
@@ -982,6 +885,7 @@ function Start-SbxJob($w, [string[]]$sbxArgs, [string]$title, [string]$subtitle,
     $ui.SessionPage.Visibility = 'Collapsed'
     $ui.ResultsPage.Visibility = 'Visible'
     $ui.ResGlyph.Text = $w.glyph; $ui.ResGlyph.Foreground = Get-Brush $w.color
+    if ($ui.ResIcon.Source) { $ui.ResIcon.Visibility = 'Visible'; $ui.ResGlyph.Visibility = 'Collapsed' }
     $ui.ResTitle.Text = $title
     $ui.ResSub.Text = $subtitle
     $ui.ResProgress.Visibility = 'Visible'
@@ -1039,6 +943,7 @@ function Complete-Job {
     $elapsed = (Get-Date) - $j.started
     $ui.ResElapsed.Text = '{0:mm\:ss}' -f $elapsed
     $ui.ResProgress.Visibility = 'Collapsed'
+    $ui.ResIcon.Visibility = 'Collapsed'; $ui.ResGlyph.Visibility = 'Visible'
     $raw = $j.firstOut
     try {
         [System.IO.File]::WriteAllText((Join-Path $j.dir 'stdout.txt'), $raw)
@@ -1073,12 +978,6 @@ function Complete-Job {
                 if ($c.fix) { Add-Log "      fix: $($c.fix)`r`n" }
             }
         } else { Add-Log $raw }
-    } elseif ($j.wf.key -eq 'browse' -and $j.stepIndex -gt 0 -and $code -ne 0) {
-        # Booted, but the lock-down or Edge launch failed: don't leave a half-locked guest around.
-        $ui.ResTitle.Text = 'Could not lock the sandbox to that site'
-        $ui.ResGlyph.Text = [char]0xEA39; $ui.ResGlyph.Foreground = Get-Brush '#C42B1C'
-        Add-Log "`r`nStopping the sandbox.`r`n"
-        Stop-Sandbox
     } elseif ($j.wf.key -eq 'script' -and $j.stepIndex -gt 0) {
         # Booted: whatever the script did, the sandbox stays up so it can be inspected.
         $ok = ($code -eq 0)
@@ -1092,9 +991,9 @@ function Complete-Job {
         Add-Log "`r`nThe sandbox is still running. Use Open session to keep working in it, or Stop sandbox to throw it away.`r`n"
         $ui.ShotBtn.Visibility = 'Visible'
         $openSession = $true; $stayOnResults = $true
-    } elseif ($j.wf.key -eq 'start' -or $j.wf.key -eq 'browse' -or $j.wf.key -eq 'script') {
+    } elseif ($j.wf.key -eq 'start' -or $j.wf.key -eq 'script') {
         if ($code -eq 0) {
-            $ui.ResTitle.Text = if ($j.wf.key -eq 'browse') { 'Website open, locked to that site' } else { 'Sandbox is running' }
+            $ui.ResTitle.Text = 'Sandbox is running'
             $ui.ResGlyph.Text = [char]0xE73E; $ui.ResGlyph.Foreground = Get-Brush '#107C10'
             $openSession = $true
         } else {
@@ -1120,15 +1019,6 @@ function Complete-Job {
             if ($r.error) { Add-Log "`r`nError: $($r.error)`r`n" }
             if ($r.failures) { foreach ($f in $r.failures) { Add-Log "Failure: $f`r`n" } }
             if ($r.console -and $r.console.stdout) { Add-Log ("`r`n--- app output ---`r`n" + $r.console.stdout) }
-            if ($r.kind -eq 'mwrap-test') {
-                foreach ($x in @($r.runs)) {
-                    $res = if ($x.timedOut) { $x.meaning } else { "exit $($x.exitCode) ($($x.meaning))" }
-                    if ($null -ne $x.detectionKeyPresent) { $res += ", detection key $(if ($x.detectionKeyPresent) { 'present' } else { 'absent' })" }
-                    Add-Log "$($x.type): $res`r`n"
-                }
-                if ($r.package) { Add-Log "Package: $($r.package.hostPackage)`r`nIn the sandbox: $($r.package.guestPackage)`r`n" }
-                if ($r.logs) { Add-Log "Logs: $($r.logs.dir)`r`n" }
-            }
             foreach ($s in @($r.shots)) { if ($s) { Add-Shot $s.path $s.name } }
             if ($r.reportPath) { Add-Log "`r`nReport: $($r.reportPath)`r`n"; $ui.OpenReportBtn.Visibility = 'Visible' }
             if ($r.kept) { Add-Log "Sandbox left running (Keep sandbox running).`r`n"; $ui.ShotBtn.Visibility = 'Visible' }
@@ -1149,14 +1039,6 @@ function Complete-Job {
         Stop-Term $null
         $ui.SessLog.Clear(); $ui.SessShotsPanel.Children.Clear(); $ui.SessShotsScroll.Visibility = 'Collapsed'
         Add-SessLog "Sandbox started in $('{0:mm\:ss}' -f $elapsed). The PowerShell below is running inside it (files you push land in C:\apps). It can also be driven from a terminal (sbx term / exec / shot) or an agent (Open Claude).`r`n"
-        if ($j.wf.key -eq 'browse') {
-            Add-SessLog "Locked to one site: only DNS and that site's addresses are reachable, and Edge blocks every other URL, file:// pages, downloads and file pickers. Stop sandbox throws it all away.`r`n"
-            if ($j.fullScreen) {
-                Add-SessLog "The sandbox window is now full screen. Press Ctrl+Alt+Break to leave or re-enter full screen.`r`n"
-                Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -WindowStyle Hidden `
-                    -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Quote-Arg (Join-Path $PSScriptRoot 'fullscreen-sandbox.ps1')))
-            }
-        }
         if ($stayOnResults) { Add-SessLog "Script run finished: $($ui.ResTitle.Text). Its output is on the results page and in $($j.dir).`r`n" }
         else { Show-Session }
         # An interactive session is for driving the guest, so Claude Code comes up beside it.
@@ -1219,7 +1101,7 @@ function Format-Since($startedAt) {
 # ---------------------------------------------------------------------------------------------
 $script:SessHistory = New-Object System.Collections.Generic.List[string]
 $script:SessHistIdx = 0
-$SessControls = 'SessShotBtn', 'SessWindowsBtn', 'SessUiBtn', 'SessPushBtn', 'SessPushDirBtn', 'SessUninstallBtn', 'SessPullBtn', 'SessStopBtn'
+$SessControls = 'SessShotBtn', 'SessWindowsBtn', 'SessUiBtn', 'SessPushBtn', 'SessPushDirBtn', 'SessUninstallBtn', 'SessStopBtn'
 $script:Term = $null      # the sbx term bridge: process, parse state, prompt/input positions in SessLog
 $script:TermCharW = 0
 
@@ -1511,16 +1393,6 @@ function Update-SessionHeader {
     $enable = $live -and -not $script:SessJob
     foreach ($c in $SessControls) { $ui[$c].IsEnabled = $enable }
     $ui.SessFolderBtn.IsEnabled = [bool]($s -and $s.outDir)
-    # A sandbox from "Wrap and test" uninstalls through the PSADT package, and can hand the package back.
-    $mw = Test-MwrapSession
-    $ui.SessPullBtn.Visibility = if ($mw) { 'Visible' } else { 'Collapsed' }
-    $ui.SessUninstallBtn.ToolTip = if ($mw) { 'Run the package''s uninstall (Invoke-AppDeployToolkit.exe -DeploymentType Uninstall -DeployMode Silent), then report what it left behind' }
-                                   else { 'Uninstall what the install test installed, then report what it left behind. The sandbox stays running' }
-}
-
-function Test-MwrapSession {
-    $s = $script:Status
-    [bool]($s -and $s.running -and $s.outDir -and (Test-Path -LiteralPath (Join-Path $s.outDir 'mwrap-state.json')))
 }
 
 function Start-SessCmd([string[]]$sbxArgs, [string]$kind, [string]$echo) {
@@ -1600,13 +1472,12 @@ function Save-Recipe {
     $v = Get-FormValues
     $suggest = $script:Current.title
     if ($v.target) { $suggest = "$($script:Current.title): $(Split-Path $v.target -Leaf)" }
-    if ($script:Current.key -eq 'browse' -and (Get-BrowseUrl $v.url)) { $suggest = "Website: $((Get-BrowseUrl $v.url).Host)" }
     $name = [Microsoft.VisualBasic.Interaction]::InputBox('Name this recipe:', 'Save recipe', $suggest)
     if (-not $name) { return }
     $list = @(Read-Recipes | Where-Object { $_.name -ne $name })
     $opts = [ordered]@{}
     foreach ($k in $v.options.Keys) { if (($script:Current.opts -contains $k -or $script:Current.fields -contains $k) -and $v.options[$k]) { $opts[$k] = $v.options[$k] } }
-    $list += [pscustomobject]@{ name = $name; workflow = $script:Current.key; target = (ConvertTo-RecipePath $v.target); args = $v.args; test = (ConvertTo-RecipePath $v.test); url = $v.url; allow = $v.allow; options = $opts }
+    $list += [pscustomobject]@{ name = $name; workflow = $script:Current.key; target = (ConvertTo-RecipePath $v.target); args = $v.args; test = (ConvertTo-RecipePath $v.test); options = $opts }
     New-Item -ItemType Directory -Force $ConfigDir | Out-Null
     ConvertTo-Json -InputObject @($list) -Depth 5 | Set-Content -LiteralPath $Recipes -Encoding UTF8
     Fill-List
@@ -1721,14 +1592,11 @@ $ui.GoBtn.Add_Click({
     $sub = $w.title
     if ($v.target) { $sub = $v.target }
     $title = switch ($w.key) { 'run' { 'Testing on a clean machine...' } 'install-test' { 'Testing installer...' } 'detonate' { 'Detonating...' }
-                               'mwrap-test' { "Wrapping and testing ($($v.options.mode))..." }
-                               'deps' { 'Scanning dependencies...' } 'start' { 'Starting a sandbox...' } 'browse' { 'Opening a locked-down browser...' }
+                               'deps' { 'Scanning dependencies...' } 'start' { 'Starting a sandbox...' }
                                'script' { 'Running the script in a fresh sandbox...' } }
     $steps = @()
-    if ($w.key -eq 'browse') { $sub = (Get-BrowseUrl $v.url).AbsoluteUri; $steps = Get-BrowseSteps $v }
     if ($w.key -eq 'script') { $steps = Get-ScriptSteps $v }
     Start-SbxJob $w (Build-Args $w $v) $title $sub $steps
-    $script:Job.fullScreen = ($w.key -eq 'browse' -and -not $v.options.windowed)
 })
 
 $ui.DoctorBtn.Add_Click({
@@ -1858,11 +1726,7 @@ $ui.SessPushDirBtn.Add_Click({
 $ui.SessFolderBtn.Add_Click({
     if ($script:Status -and $script:Status.outDir) { Start-Process -FilePath explorer.exe -ArgumentList ('"' + $script:Status.outDir + '"') }
 })
-$ui.SessUninstallBtn.Add_Click({
-    if (Test-MwrapSession) { Start-SessCmd @('mwrap-run', 'uninstall') 'text' 'sbx mwrap-run uninstall' }
-    else { Start-SessCmd @('uninstall-test') 'text' 'sbx uninstall-test' }
-})
-$ui.SessPullBtn.Add_Click({ Start-SessCmd @('mwrap-pull') 'text' 'sbx mwrap-pull' })
+$ui.SessUninstallBtn.Add_Click({ Start-SessCmd @('uninstall-test') 'text' 'sbx uninstall-test' })
 $ui.SessStopBtn.Add_Click({ Stop-Sandbox })
 $ui.SessionPage.AllowDrop = $true
 $ui.SessionPage.Add_PreviewDragOver({ param($s, $e) $e.Effects = 'Copy'; $e.Handled = $true })

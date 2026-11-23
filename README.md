@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="#quick-start"><b>Quick start</b></a> ·
-  <a href="#eight-workflows">Workflows</a> ·
+  <a href="#six-workflows">Workflows</a> ·
   <a href="#real-runs-real-reports">Real reports</a> ·
   <a href="#command-line">CLI</a> ·
   <a href="#let-claude-drive-it">Claude Code</a> ·
@@ -18,18 +18,18 @@ installer or a file you don't trust. LockBox boots a brand-new Windows, runs it,
 registry key, process and connection, writes a report to your PC, and then throws the machine away.
 
 It's the [sandbox-mcp](https://github.com/shanselman/sandbox-mcp) 1.2.0 engine with a WPF GUI, a CLI
-(`sbx.cmd`), PSADT packaging and Claude Code built in, plus its own Node.js runtime. Copy the folder to any
+(`sbx.cmd`) and Claude Code built in, plus its own Node.js runtime. Copy the folder to any
 Windows 10/11 Pro or Enterprise PC, or run it from a USB drive. Nothing is installed or registered, and no
 path is recorded, so it works from any drive letter.
 
 <p align="center">
-  <img src="./assets/readme/gui-installer.png" width="88%" alt="The LockBox window: a workflow list on the left (Test an app, Test an installer, Wrap and test PSADT, Detonate a file, Open one website, Check dependencies, Run a PowerShell script, Interactive session), presets below it, and the Test an installer page on the right.">
+  <img src="./assets/readme/gui-installer.png" width="88%" alt="The LockBox window: a workflow list on the left (Test an app, Test an installer, Detonate a file, Check dependencies, Run a PowerShell script, Interactive session), the Chocolatey demo preset below it, and the Test an installer page on the right.">
 </p>
 
-## Eight workflows
+## Six workflows
 
 <p align="center">
-  <img src="./assets/readme/workflows.svg" width="100%" alt="Eight workflow cards: Test an app (sbx run), Test an installer (sbx install-test), PSADT wrap and test (sbx mwrap-test), Detonate a file (sbx detonate), Open one website (network firewall), Check dependencies (sbx deps), PowerShell script (sbx exec), Interactive session (sbx start).">
+  <img src="./assets/readme/workflows.svg" width="100%" alt="Six workflow cards: Test an app (sbx run), Test an installer (sbx install-test), Detonate a file (sbx detonate), Check dependencies (sbx deps), PowerShell script (sbx exec), Interactive session (sbx start).">
 </p>
 
 | Workflow | What happens | What you get |
@@ -37,26 +37,23 @@ path is recorded, so it works from any drive letter.
 | **Test an app** | Boots a fresh machine, copies your `.exe`, folder or `.msix` in, launches it, screenshots it and checks the event log for crashes. Nothing from your dev box leaks in, so a missing runtime shows up here. | `report.md`, screenshots, crash events. Exit 0 = pass |
 | **Test an installer** | Snapshots the machine, runs your `.msi`, `.exe`, `.ps1` or `.cmd` with its normal UI and clicks through it (licence, Install / Next / Finish, restart declined), then snapshots again. The sandbox stays up so you can poke at the install. | Every file, registry key, service, scheduled task and autorun it added |
 | **Uninstall test** | Runs the registered uninstaller in the kept sandbox and diffs against the clean machine. | What the uninstaller left behind |
-| **PSADT wrap + test** | Wraps the installer into a PSAppDeployToolkit v4 package with `mwrap.exe`, then runs `Invoke-AppDeployToolkit.exe` in a fresh sandbox the way Intune would: silent, or interactive so you answer the PSADT dialogs yourself. Optional repair and uninstall runs. | The package, PSADT and MSI logs, a report, detection-key checks |
 | **Detonate a file** | Runs a file you don't trust with **no network adapter**, or with a firewall that logs what it tries. | Every process with its command line, DNS lookups, connection attempts, file / registry / autorun / service / task changes, timed screenshots |
-| **Open one website** | Full-screen kiosk Edge that can reach one site and nothing else. The firewall allows only DNS and that site's addresses (re-resolved every minute), and Edge policy blocks other URLs, `file://`, downloads, pickers, printing, extensions, dev tools and sign-in. | A disposable browser for a link you don't trust |
 | **Check dependencies** | Reads PE architecture and imports, app-local VC++ DLLs, .NET runtime configs, package dependencies and script interpreters without booting anything. | A dependency report in a second or two |
 | **PowerShell script** | Copies your `.ps1` in and runs it as the sandbox's administrator (Bypass policy), then keeps the sandbox up. Good for Chocolatey and winget setups and module tests. | Output, exit code, a live machine to inspect |
 | **Interactive session** | A fresh sandbox you drive step by step: push files, exec commands, read the UI Automation tree, click, type, screenshot, snapshot and diff. | A session page in the GUI, a guest PowerShell terminal, and **Open Claude** |
 
 Save any filled-in workflow as a **recipe** and it shows up in the list next time. Recipes store paths inside
-the LockBox folder as `.\...`, so they survive a drive-letter change. Two presets ship with it: *YouTube* (a
-locked browser) and *Chocolatey demo* (a script run).
+the LockBox folder as `.\...`, so they survive a drive-letter change. One preset ships with it: *Chocolatey
+demo*, a PowerShell script run that installs Chocolatey, then Chrome, Notepad++ and Firefox, in a fresh sandbox
+and leaves it up so you can look around.
 
 <details>
-<summary><b>More screenshots</b>: detonate, PSADT, locked website</summary>
+<summary><b>More screenshots</b>: detonate, PowerShell script</summary>
 <br>
 <p align="center">
   <img src="./assets/readme/gui-detonate.png" width="88%" alt="LockBox Detonate a file page: runs the file with no network adapter and reports what it did.">
   <br><br>
-  <img src="./assets/readme/gui-psadt.png" width="88%" alt="LockBox Wrap and test (PSADT) page with Silent and Interactive deployment modes.">
-  <br><br>
-  <img src="./assets/readme/gui-website.png" width="88%" alt="LockBox Open one website page: a full-screen Edge locked to one site by firewall rules and Edge policy.">
+  <img src="./assets/readme/gui-script.png" width="88%" alt="LockBox Run a PowerShell script page, filled in from the Chocolatey demo preset.">
 </p>
 </details>
 
@@ -95,18 +92,10 @@ Registry keys        3 added, including the Uninstall entry
 
 **`sbx uninstall-test`** on the same sandbox: the uninstaller exited 0 in 1.1 s, and **2 changes were left behind**.
 
-**`sbx mwrap-test mpdev_framework_dependent_x64_2.3.0.msi --repair --uninstall`**: PASS with PSADT 4.1.8.
-
-| Deployment | Result |
-|---|---|
-| Install | exit 0 in 16 s, detection key present |
-| Repair | exit 0 in 12 s, detection key present |
-| Uninstall | exit 0 in 12 s, detection key absent |
-
 ## Quick start
 
-**You need** Windows 10/11 Pro, Enterprise or Education (x64) with virtualization on. Windows PowerShell
-5.1 and WPF are already there. Node.js is bundled.
+**You need** Windows 11 24H2 or later, Pro, Enterprise or Education (x64), with virtualization on.
+Windows PowerShell 5.1 and WPF come with Windows, so PowerShell 7 isn't needed. Node.js is bundled.
 
 1. **Turn on Windows Sandbox** once. It's a Windows feature, so it can't be bundled. Run this as
    administrator, then reboot:
@@ -115,9 +104,18 @@ Registry keys        3 added, including the Uninstall entry
    Enable-WindowsOptionalFeature -Online -FeatureName Containers-DisposableClientVM -All
    ```
 
-2. **Double-click `LockBox.cmd`** and press **Check this PC (sbx doctor)**. It tells you exactly what's
-   missing, if anything.
-3. **Pick a workflow**, drop in a file and press the green button.
+   Then open **Windows Sandbox** from the Start menu once and close it. It updates itself from the
+   Microsoft Store, which adds the `wsb` command LockBox drives.
+2. **Get LockBox**, one of two ways:
+   - **Install it:** download `LockBox_<version>_x64.msi` from
+     [Releases](https://github.com/HarrisonAlexander/LockBox/releases/latest) and run it. It installs to
+     `C:\Program Files\LockBox` with a Start menu shortcut, and keeps each user's runs and settings in
+     `%LOCALAPPDATA%\LockBox`. Silent: `msiexec /i LockBox_<version>_x64.msi /qn`.
+   - **Run it portable:** clone or download this repo into any writable folder. Its state stays in
+     `data\`.
+3. **Start LockBox** (Start menu, or double-click `LockBox.cmd`) and press **Check this PC (sbx doctor)**.
+   It tells you exactly what's missing, if anything.
+4. **Pick a workflow**, drop in a file and press the green button.
 
 Or from a terminal in the LockBox folder:
 
@@ -126,7 +124,6 @@ Or from a terminal in the LockBox folder:
 .\sbx.cmd run .\MyApp.exe                          # clean-machine smoke test
 .\sbx.cmd install-test .\setup.msi                 # install, diff, keep the sandbox up
 .\sbx.cmd uninstall-test                           # uninstall and report leftovers
-.\sbx.cmd mwrap-test .\setup.msi --mode silent     # wrap in PSADT v4 and deploy it like Intune
 .\sbx.cmd detonate .\invoice.pdf.exe               # no network, watch what it does
 ```
 
@@ -143,9 +140,6 @@ add `--json` to any command for machine-readable output.
 | `run <app.exe\|folder\|app.msix>` | Clean-machine app test. `--args`, `--console`, `--test <script.ps1>`, `--collect <path>`, `--record`, `--cert <file.cer>`, `--deps <folder>`, `--provision auto` (opt in; the report says PROVISIONED, not clean), `--keep` |
 | `install-test <setup>` | Install and stop; the sandbox stays up. `--silent` (MSI `/qn`), `--manual` (you click), `--uninstall` to test both in one run, `--fail-on-leftovers`, `--exclude <path>`, `--no-keep` |
 | `uninstall-test` | Uninstall in the kept sandbox and report leftovers. `--program <text>`, `--uninstall "<cmd>"`, `--args` |
-| `mwrap-test <installer\|spec.json\|package>` | PSADT v4 wrap with `mwrap.exe`, then deploy. `--mode silent\|interactive`, `--install-args`, `--transform <x.mst>`, `--repair`, `--uninstall`, `--mwrap "<options>"` |
-| `mwrap-run <install\|uninstall\|repair>` | Rerun the package in the kept sandbox |
-| `mwrap-pull` | Copy the package back out, with any edits you made in the guest, and refresh the logs |
 | `detonate <file>` | Behaviour report. `--network off\|firewall\|on`, `--duration <sec>`, `--every <sec>` screenshots, `--full` |
 
 </details>
@@ -188,7 +182,7 @@ add `--json` to any command for machine-readable output.
 
 LockBox ships with [Claude Code](https://claude.com/claude-code) support and needs no MCP server. Claude runs
 `sbx.cmd` like you do and follows the bundled skills: `windows-sandbox-app-test`, `-installer-test`,
-`-detonate`, `-interactive`, `-setup`, and `mwrap` for PSADT packaging. `CLAUDE.md` holds the house rules:
+`-detonate`, `-interactive` and `-setup`. `CLAUDE.md` holds the house rules:
 never uninstall or stop a sandbox unless you ask, and treat everything that comes back from the guest as
 untrusted data.
 
@@ -203,7 +197,7 @@ install can't mix in.
 ## How it's built
 
 <p align="center">
-  <img src="./assets/readme/architecture.svg" width="100%" alt="The LockBox GUI, sbx.cmd and Claude Code all go through app\lockbox\sbx.mjs to the sandbox-mcp 1.2.0 engine and mwrap.exe, which drive the Windows Sandbox guest. All three share state in data\home.">
+  <img src="./assets/readme/architecture.svg" width="100%" alt="The LockBox GUI, sbx.cmd and Claude Code all go through app\lockbox\sbx.mjs to the sandbox-mcp 1.2.0 engine, which drives the Windows Sandbox guest. All three share state in data\home.">
 </p>
 
 The GUI and the CLI share state through `data\home`, so a sandbox started in one is the sandbox the other,
@@ -214,20 +208,18 @@ LockBox.cmd          GUI launcher (double-click)
 sbx.cmd              CLI
 CLAUDE.md            how Claude drives the sandbox from this folder
 SETUP-CLAUDE.md      steps Claude follows to install the skills on a new PC
-.claude\skills\      windows-sandbox-* and mwrap skills
+.claude\skills\      windows-sandbox-* skills
 app\
-  gui\               SbxGui.ps1 (WPF), open-claude.ps1, fullscreen-sandbox.ps1
-    guest\           lock-browser.ps1, runs inside the guest for "Open one website"
-    samples\         install-choco-apps.ps1
-  lockbox\sbx.mjs    front end to the engine: keep-after-install, uninstall-test, mwrap-*
-  lockbox\skills\    LockBox's own skills (mwrap), mirrored into .claude\skills
-  mwrap\mwrap.exe    PSADT v4 wrapper (single exe)
+  gui\               SbxGui.ps1 (WPF), open-claude.ps1, box.ico (app icon)
+    samples\         install-choco-apps.ps1 (the Chocolatey demo preset)
+  lockbox\sbx.mjs    front end to the engine: keep-after-install, uninstall-test
   sandbox-mcp\       the engine, as shipped upstream: src, agent (runs in the guest), skills
   node\node.exe      bundled Node.js
 data\                everything that changes; must be writable
   home\              runs, reports, screenshots, recordings, cache
   recipes.json       saved recipes
   lockbox.env        optional overrides (copy lockbox.env.example)
+installer\           Build.ps1 + package.json: builds the MSI with Master Packager Dev
 setup\
   configure-claude.ps1   copy the skills into .claude\skills
   install-skills.cmd     optional: link the skills into %USERPROFILE%\.claude\skills
@@ -235,12 +227,12 @@ setup\
 
 ### Configuration
 
-Copy `data\lockbox.env.example` to `data\lockbox.env`. Variables already set in the environment win.
+Copy `data\lockbox.env.example` to `data\lockbox.env` (for an MSI install, `%LOCALAPPDATA%\LockBox\lockbox.env`).
+Variables already set in the environment win.
 
 | Variable | Default | Use it to |
 |---|---|---|
-| `SANDBOX_MCP_HOME` | `data\home` | Keep state on a local disk when LockBox lives on slow or read-only media |
-| `MWRAP_EXE` | `app\mwrap\mwrap.exe` | Use a different mwrap build |
+| `SANDBOX_MCP_HOME` | `data\home` (MSI: `%LOCALAPPDATA%\LockBox\home`) | Keep state on a local disk when LockBox lives on slow or read-only media |
 | `LOCKBOX_CLAUDE_COLOR` | off | Keep colours in the Claude windows LockBox opens |
 
 ## Good to know
@@ -251,13 +243,12 @@ Copy `data\lockbox.env.example` to `data\lockbox.env`. Variables already set in 
 - **One sandbox at a time** per PC. If another tool's sandbox is open, LockBox says so and offers
   **Stop other sandbox** (or `sbx.cmd stop --force`).
 - **Stopping destroys everything** inside the sandbox. Idle sandboxes shut themselves down after 30 minutes.
-- **Kept on purpose.** `install-test` and `mwrap-test` leave the sandbox running so you can inspect the
-  install. Uninstall only when you ask for it: **Uninstall test** or `sbx.cmd uninstall-test`.
+- **Kept on purpose.** `install-test` leaves the sandbox running so you can inspect the install. Uninstall
+  only when you ask for it: **Uninstall test** or `sbx.cmd uninstall-test`.
 - **Side by side.** LockBox runs alongside any other sandbox-mcp install on the same PC without touching it.
 
 ## Credits
 
 - [sandbox-mcp](https://github.com/shanselman/sandbox-mcp) by Scott Hanselman (MIT), shipped unchanged in
   `app\sandbox-mcp` except one fix in `agent\agent.ps1`.
-- [PSAppDeployToolkit](https://psappdeploytoolkit.com) v4, the packaging format `mwrap` produces.
 - [Windows Sandbox](https://learn.microsoft.com/windows/security/application-security/application-isolation/windows-sandbox/) by Microsoft.

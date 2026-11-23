@@ -1,0 +1,33 @@
+{
+  "$schema": "https://www.masterpackager.com/support-master-packager-dev/mpdev-schema.json",
+  "outputTypes": ["msi"],
+  "outputDirectory": "output",
+  "outputFileName": "LockBox_$.version_$.platform",
+  "packageName": "LockBox",
+  "publisher": "HarrisonAlexander",
+  "version": "1.0.0",
+  "platform": "x64",
+  "installDir": "%ProgramFiles%\\LockBox",
+  "icon": "build\\app\\gui\\box.ico",
+  "fileSystemEntries": [
+    { "sourcePath": "build", "targetPath": "$.installDir" }
+  ],
+  "shortcuts": [
+    {
+      "target": "$.installDir\\LockBox.cmd",
+      "name": "LockBox",
+      "description": "Test apps, installers, scripts and untrusted files in a throwaway Windows Sandbox",
+      "icon": "build\\app\\gui\\box.ico",
+      "workingDirectory": "$.installDir"
+    }
+  ],
+  "msi": {
+    "upgradeCode": "{EF08A212-A9A9-48FD-9873-AD3A6B7A1CDF}",
+    "installDialog": {
+      "packageDescription": "Test apps, installers, PowerShell scripts and untrusted files in a throwaway Windows Sandbox. Needs Windows 11 24H2 or later with Windows Sandbox turned on.",
+      "publisherUrl": "https://github.com/HarrisonAlexander/LockBox",
+      "releaseNotesUrl": "https://github.com/HarrisonAlexander/LockBox/releases",
+      "primaryAccent": "#1A7FD4"
+    }
+  }
+}

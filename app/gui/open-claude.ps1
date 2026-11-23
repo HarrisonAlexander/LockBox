@@ -39,7 +39,10 @@ $env:TERM = 'xterm-256color'
 # A LockBox started from inside another Claude Code session must not hand that session's identity on.
 Get-ChildItem Env: | Where-Object { $_.Name -like 'CLAUDE_CODE_*' -or $_.Name -in 'CLAUDECODE', 'CLAUDE_PID' } |
     ForEach-Object { Remove-Item "Env:$($_.Name)" }
-& (Join-Path $root 'setup\configure-claude.ps1') -Workspace $Workspace | Out-Null
+# An MSI install ships the skills already and its folder is read-only, so only a portable copy syncs them.
+if (-not (Test-Path -LiteralPath (Join-Path $root 'app\installed'))) {
+    & (Join-Path $root 'setup\configure-claude.ps1') -Workspace $Workspace | Out-Null
+}
 
 Write-Host 'Claude Code on this PC, driving the running sandbox with the sbx CLI.' -ForegroundColor Cyan
 Write-Host 'Try: "take a screenshot of the sandbox", "install 7-Zip in the sandbox and test it", "what windows are open?"' -ForegroundColor DarkGray
