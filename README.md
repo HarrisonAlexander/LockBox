@@ -13,14 +13,30 @@
   <a href="#how-its-built">Architecture</a>
 </p>
 
-**LockBox** is a portable folder that turns Windows Sandbox into a test bench. Drop in an app, an
-installer or a file you don't trust. LockBox boots a brand-new Windows, runs it, watches every file,
-registry key, process and connection, writes a report to your PC, and then throws the machine away.
+**LockBox is a desktop GUI for Scott Hanselman's [sandbox-mcp](https://github.com/shanselman/sandbox-mcp).**
 
-It's the [sandbox-mcp](https://github.com/shanselman/sandbox-mcp) 1.2.0 engine with a WPF GUI, a CLI
-(`sbx.cmd`) and Claude Code built in, plus its own Node.js runtime. Copy the folder to any
-Windows 10/11 Pro or Enterprise PC, or run it from a USB drive. Nothing is installed or registered, and no
-path is recorded, so it works from any drive letter.
+Scott [put it like this](https://www.linkedin.com/posts/shanselman_a-lot-of-people-dont-realize-that-windows-share-7524715266119909376-OJuW/):
+
+> A lot of people don't realize that Windows has a built-in feature called Windows "Sandbox" that boots up a
+> brand new virtual Windows machine in seconds. So I made an MCP server so you can test your apps inside a
+> throwaway machine in seconds. Best feature? "sbx detonate".
+
+sandbox-mcp is the engine. It boots the sandbox, deploys your app, drives its UI, diffs installs, detonates
+files and writes the reports, and you reach it from an AI agent over MCP or from its `sbx` command line.
+LockBox puts a PowerShell (WPF) window in front of that engine. Every workflow in Scott's README, from
+clean-machine app tests and installer audits to `sbx detonate`, dependency scans, scripts and interactive
+sessions, becomes a form with one green button. You get the same reports without typing a command.
+
+The folder carries the sandbox-mcp 1.2.0 engine as shipped, the GUI, a CLI (`sbx.cmd`), Claude Code support
+and its own Node.js runtime. Copy it to any Windows 11 Pro or Enterprise PC, or run it from a USB drive.
+Nothing is installed or registered, and no path is recorded, so it works from any drive letter.
+
+| sandbox-mcp: the engine, by Scott Hanselman | LockBox: the GUI around it |
+|---|---|
+| Boots and tears down Windows Sandbox, with a guest agent inside it | A WPF window with one page per workflow, and a session page for a running sandbox |
+| `run`, `install-test`, `detonate`, `deps`, `exec`, `ui`, `shot`, `snapshot` / `diff`, `record` | Forms and buttons for all of them, with live progress, screenshots and **Open report** |
+| Reports, screenshots and recordings saved on the host | **Recipes**: save a filled-in workflow and run it again later |
+| An MCP server and the `sbx` CLI, sharing one state | Keep-after-install with a separate **Uninstall test**, a guest PowerShell terminal, **Open Claude**, and a portable folder or an MSI |
 
 <p align="center">
   <img src="./assets/readme/gui-installer.png" width="88%" alt="The LockBox window: a workflow list on the left (Test an app, Test an installer, Detonate a file, Check dependencies, Run a PowerShell script, Interactive session), the Chocolatey demo preset below it, and the Test an installer page on the right.">
@@ -249,6 +265,8 @@ Variables already set in the environment win.
 
 ## Credits
 
-- [sandbox-mcp](https://github.com/shanselman/sandbox-mcp) by Scott Hanselman (MIT), shipped unchanged in
-  `app\sandbox-mcp` except one fix in `agent\agent.ps1`.
+- [sandbox-mcp](https://github.com/shanselman/sandbox-mcp) by Scott Hanselman (MIT): the engine LockBox is built
+  on, and the reason it exists. It ships unchanged in `app\sandbox-mcp` except one fix in `agent\agent.ps1`.
+  Scott's [announcement post](https://www.linkedin.com/posts/shanselman_a-lot-of-people-dont-realize-that-windows-share-7524715266119909376-OJuW/)
+  explains why Windows Sandbox makes such a good throwaway test machine.
 - [Windows Sandbox](https://learn.microsoft.com/windows/security/application-security/application-isolation/windows-sandbox/) by Microsoft.
