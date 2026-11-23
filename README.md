@@ -13,9 +13,9 @@
   <a href="#how-its-built">Architecture</a>
 </p>
 
-**LockBox is a desktop GUI for Scott Hanselman's [sandbox-mcp](https://github.com/shanselman/sandbox-mcp).**
+**LockBox is a desktop GUI for the [Windows Sandbox MCP](https://github.com/shanselman/sandbox-mcp).**
 
-Scott [put it like this](https://www.linkedin.com/posts/shanselman_a-lot-of-people-dont-realize-that-windows-share-7524715266119909376-OJuW/):
+Its author, Scott Hanselman, [put it like this](https://www.linkedin.com/posts/shanselman_a-lot-of-people-dont-realize-that-windows-share-7524715266119909376-OJuW/):
 
 > A lot of people don't realize that Windows has a built-in feature called Windows "Sandbox" that boots up a
 > brand new virtual Windows machine in seconds. So I made an MCP server so you can test your apps inside a
