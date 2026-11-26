@@ -5,6 +5,7 @@
 <p align="center"><sub>The file blows up. The box holds. A fresh one takes its place. <a href="./assets/readme/lockbox-detonation.mp4">Watch the clip in 1080p, with sound</a></sub></p>
 
 <p align="center">
+  <a href="#watch-the-demo"><b>Watch the demo</b></a> ·
   <a href="#quick-start"><b>Quick start</b></a> ·
   <a href="#six-workflows">Workflows</a> ·
   <a href="#real-runs-real-reports">Real reports</a> ·
@@ -12,6 +13,33 @@
   <a href="#let-claude-drive-it">Claude Code</a> ·
   <a href="#how-its-built">Architecture</a>
 </p>
+
+## Watch the demo
+
+<p align="center">
+  <a href="./assets/readme/lockbox-demo.mp4"><img src="./assets/readme/demo-poster.jpg" width="100%" alt="LockBox demo video, 11 minutes 52 seconds: the LockBox window and a Windows Sandbox side by side on the left, Harrison and Margaret talking it through on the right, here during Detonate a file, where the sample's 'Your files have been locked' takeover stays inside the sandbox."></a>
+</p>
+
+<p align="center"><sub>A two-host walkthrough of every workflow, recorded on a real PC against real sandboxes, ending on <code>sbx detonate</code>. <a href="./assets/readme/lockbox-demo.mp4">Watch the demo (11:52, 1080p, with sound)</a></sub></p>
+
+<details>
+<summary>Chapters</summary>
+
+| Time | Chapter |
+|---|---|
+| 0:00 | LockBox |
+| 0:08 | What is LockBox |
+| 1:34 | Check this PC |
+| 2:13 | Check dependencies |
+| 2:48 | Test an app |
+| 3:58 | Test an installer |
+| 5:26 | Scripts and recipes |
+| 6:18 | Interactive session and Claude |
+| 7:29 | Detonate a file |
+| 10:05 | The box held |
+| 11:07 | The repo |
+
+</details>
 
 **LockBox is a desktop GUI for the [Windows Sandbox MCP](https://github.com/shanselman/sandbox-mcp).**
 
