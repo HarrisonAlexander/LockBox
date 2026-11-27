@@ -17,6 +17,12 @@
 ## Watch the demo
 
 <p align="center">
+  <a href="./assets/readme/lockbox-highlight.mp4"><img src="./assets/readme/highlight-poster.jpg" width="100%" alt="LockBox highlight video, 2 minutes 28 seconds: the LockBox title over a glass lockbox, built on the Windows Sandbox MCP, before Harrison and Margaret detonate a file in a throwaway sandbox."></a>
+</p>
+
+<p align="center"><sub>The short version: what LockBox is, then one file detonated in a throwaway sandbox while the PC stays clean. <a href="./assets/readme/lockbox-highlight.mp4">Watch the highlight (2:28, 1080p, with sound)</a></sub></p>
+
+<p align="center">
   <a href="./assets/readme/lockbox-demo.mp4"><img src="./assets/readme/demo-poster.jpg" width="100%" alt="LockBox demo video, 11 minutes 52 seconds: the LockBox window and a Windows Sandbox side by side on the left, Harrison and Margaret talking it through on the right, here during Detonate a file, where the sample's 'Your files have been locked' takeover stays inside the sandbox."></a>
 </p>
 
