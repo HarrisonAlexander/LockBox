@@ -16,10 +16,6 @@
 
 ## Watch the demo
 
-<p align="center">
-  <a href="./assets/readme/lockbox-highlight.mp4"><img src="./assets/readme/highlight-poster.jpg" width="100%" alt="LockBox highlight video, 2 minutes 28 seconds: the LockBox window with a note reading A PowerShell GUI, 6 workflows, 1 button each, under the header LockBox, Windows Sandbox MCP, engine sandbox-mcp by Scott Hanselman, with Harrison and Margaret on the right."></a>
-</p>
-
 <p align="center"><sub>The short version: what LockBox is, then one file detonated in a throwaway sandbox while the PC stays clean. <a href="./assets/readme/lockbox-highlight.mp4">Watch the highlight (2:28, 1080p, with sound)</a></sub></p>
 
 <p align="center">
